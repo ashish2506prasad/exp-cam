@@ -1,0 +1,22 @@
+{
+  "architecture": "UNetCSAE (AM0 cell 5 / AM6)",
+  "trained_from_scratch": "per image",
+  "optimizer": "Adam",
+  "lr": 5e-5,
+  "steps": 880,
+  "seed_rule": "seed = 0 + 17*int(image_id) + 1009*(sum(ord(c) for c in backbone) % 97) so LOO configs share the same U-Net init",
+  "lambdas_default": {
+    "act": 10.0,
+    "ce": 15.0,
+    "kl": 5.0,
+    "area": 100.0,
+    "bin": 1.0,
+    "tv": 500.0,
+    "rob": 100.0
+  },
+  "source_notebooks": "AM4/AM5/AM6 full-model cells (later canonical). AM1 used lr=3e-4 and smaller λ; AM2–AM3 used 10/50/25/245/25/350 without L_rob.",
+  "temperature_train_KL": 2.0,
+  "mask_binarization": "sigmoid + STE threshold 0.5",
+  "baseline_grey": 0.5,
+  "eval_set": "expcam_runs/eval_set.json sampled from trainx/ (7 ImageNet synsets)"
+}
