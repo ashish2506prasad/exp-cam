@@ -20,6 +20,7 @@ except ImportError:
 
 ensure_pkg_path()
 
+from cli import device_from_flag
 from config import SEED, TEMPERATURE, add_where_args
 from io_utils import ensure_dir, rows_to_excel, save_json
 from losses import hard_st
@@ -187,8 +188,8 @@ def run_section6(args) -> None:
             f"Original error: {e}"
         )
 
-    device = torch.device("cuda" if torch.cuda.is_available() and args.device != "cpu" else "cpu")
-    print(f"Loading {args.model} on {device} …")
+    device = device_from_flag(args.device)
+    print(f"Loading {args.model} on {device} ...")
     try:
         tokenizer = AutoTokenizer.from_pretrained(args.model)
         model = AutoModelForCausalLM.from_pretrained(args.model).to(device)
