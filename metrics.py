@@ -12,9 +12,16 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from .classifiers import ClassifierBundle
-from .config import IMAGENET_MEAN, IMAGENET_STD, MASK_THRESH, N_INSERT_STEPS
-from .losses import binarization_loss, tv8_loss
+try:
+    from ._path import ensure_pkg_path
+except ImportError:
+    from _path import ensure_pkg_path
+
+ensure_pkg_path()
+
+from classifiers import ClassifierBundle
+from config import IMAGENET_MEAN, IMAGENET_STD, MASK_THRESH, N_INSERT_STEPS
+from losses import binarization_loss, tv8_loss
 
 
 def mask_size(mask: torch.Tensor) -> float:

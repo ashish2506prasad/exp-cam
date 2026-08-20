@@ -12,9 +12,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
 
-from .config import GREY_BG
-from .io_utils import ensure_dir
-from .metrics import denormalize, explanation_on_grey
+try:
+    from ._path import ensure_pkg_path
+except ImportError:
+    from _path import ensure_pkg_path
+
+ensure_pkg_path()
+
+from config import GREY_BG
+from io_utils import ensure_dir
+from metrics import denormalize, explanation_on_grey
 
 
 def caption(p_pct: float, conf: float, top1: float) -> str:

@@ -6,18 +6,24 @@ import argparse
 from pathlib import Path
 from typing import Dict, List, Optional, Sequence
 
+try:
+    from ._path import ensure_pkg_path
+except ImportError:
+    from _path import ensure_pkg_path
+
+ensure_pkg_path()
+
 import numpy as np
 from PIL import Image
 
-from .config import (
+from config import (
     DEFAULT_BACKBONES,
-    EVAL_SET_PATH,
     N_PER_CLASS,
     SEED,
     TRAINX_CLASSES,
-    TRAINX_DIR,
+    add_where_args,
 )
-from .io_utils import load_json, save_json
+from io_utils import load_json, save_json
 
 
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".JPEG", ".JPG", ".PNG", ".bmp"}
@@ -33,14 +39,24 @@ def list_class_images(root: Path, wnid: str) -> List[Path]:
 
 
 def build_eval_set(
-    root: Path = TRAINX_DIR,
+    root: Optional[Path] = None,
     n_per_class: int = N_PER_CLASS,
     seed: int = SEED,
     force: bool = False,
-    path: Path = EVAL_SET_PATH,
+    path: Optional[Path] = None,
 ) -> Dict:
+    import config as C
+
+    if root is None:
+        root = C.TRAINX_DIR
+    if path is None:
+        path = C.EVAL_SET_PATH
+    root = Path(root)
+    path = Path(path)
+
     if path.exists() and not force:
         data = load_json(path)
+        data["root"] = str(root)
         print(f"Reusing cached eval set ({len(data['images'])} images) at {path}")
         return data
 
@@ -49,7 +65,7 @@ def build_eval_set(
     classes_present = [wnid for wnid in TRAINX_CLASSES if (root / wnid).is_dir()]
     if len(classes_present) < 5:
         raise RuntimeError(
-            f"Need ≥5 classes in {root}; found {classes_present}"
+            f"Need at least 5 classes in {root}; found {classes_present}"
         )
     for class_i, wnid in enumerate(classes_present):
         files = list_class_images(root, wnid)
@@ -93,14 +109,23 @@ def build_eval_set(
     return data
 
 
-def load_eval_set(path: Path = EVAL_SET_PATH) -> Dict:
+def load_eval_set(path: Optional[Path] = None) -> Dict:
+    import config as C
+
+    if path is None:
+        path = C.EVAL_SET_PATH
+    path = Path(path)
     if not path.exists():
         return build_eval_set(path=path)
-    return load_json(path)
+    data = load_json(path)
+    data["root"] = str(C.TRAINX_DIR)
+    return data
 
 
 def image_path(record: Dict, root: Optional[Path] = None) -> Path:
-    root = Path(root) if root is not None else Path(load_eval_set()["root"])
+    import config as C
+
+    root = Path(root) if root is not None else C.TRAINX_DIR
     return root / record["relpath"]
 
 
@@ -132,7 +157,8 @@ def same_class_records(eval_set: Dict, rec: Dict) -> List[Dict]:
 
 def parse_eval_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Build the cached EXP-CAM eval set from trainx/")
-    p.add_argument("--root", type=Path, default=TRAINX_DIR)
+    add_where_args(p)
+    p.add_argument("--root", type=Path, default=None, help="Alias for --data-root")
     p.add_argument("--n-per-class", type=int, default=N_PER_CLASS)
     p.add_argument("--seed", type=int, default=SEED)
     p.add_argument("--force", action="store_true")
@@ -140,8 +166,12 @@ def parse_eval_args(argv: Optional[Sequence[str]] = None) -> argparse.Namespace:
 
 
 def main(argv: Optional[Sequence[str]] = None) -> None:
+    import config as C
+
     args = parse_eval_args(argv)
-    build_eval_set(root=args.root, n_per_class=args.n_per_class, seed=args.seed, force=args.force)
+    data_root = args.data_root or args.root
+    C.apply_where(args.where, data_root=data_root, runs_dir=args.out)
+    build_eval_set(root=C.TRAINX_DIR, n_per_class=args.n_per_class, seed=args.seed, force=args.force)
 
 
 if __name__ == "__main__":

@@ -9,7 +9,14 @@ import torch
 import torch.nn as nn
 import torchvision.models as models
 
-from .config import LAYER_WEIGHTS_RESNET
+try:
+    from ._path import ensure_pkg_path
+except ImportError:
+    from _path import ensure_pkg_path
+
+ensure_pkg_path()
+
+from config import LAYER_WEIGHTS_RESNET
 
 
 TapSpec = Dict[str, nn.Module]

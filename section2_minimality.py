@@ -13,15 +13,22 @@ from pathlib import Path
 
 import numpy as np
 
-from .cli import add_common_args, resolve_run
-from .classifiers import load_classifier
-from .config import BUDGETS, DEFAULT_LAMBDAS, FIDELITY_TAUS
-from .data import load_tensor
-from .io_utils import load_json, mean_std, rows_to_excel, save_json
-from .metrics import min_sufficient_budget
-from .runner import maybe_train_and_eval, run_dir
-from .train import TrainConfig, image_seed, log
-from .viz import (
+try:
+    from ._path import ensure_pkg_path
+except ImportError:
+    from _path import ensure_pkg_path
+
+ensure_pkg_path()
+
+from cli import add_common_args, resolve_run
+from classifiers import load_classifier
+from config import BUDGETS, DEFAULT_LAMBDAS, FIDELITY_TAUS
+from data import load_tensor
+from io_utils import load_json, mean_std, rows_to_excel, save_json
+from metrics import min_sufficient_budget
+from runner import maybe_train_and_eval, run_dir
+from train import TrainConfig, image_seed, log
+from viz import (
     boxplot,
     caption,
     fidelity_vs_budget,
@@ -196,7 +203,7 @@ def _figures(eval_set, images, args, rows_2a, rows_2b, pstar_rows, device, budge
 
 
 def _fig_b5(eval_set, args, device, fig_dir, budgets) -> None:
-    from .runner import load_masks
+    from runner import load_masks
 
     qids = eval_set["qualitative_ids"][:3]
     id_to_rec = {r["id"]: r for r in eval_set["images"]}

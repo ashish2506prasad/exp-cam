@@ -14,21 +14,28 @@ import numpy as np
 import torch
 import torchvision.transforms.functional as TF
 
-from .cli import add_common_args, resolve_run
-from .classifiers import load_classifier, run_with_acts
-from .config import AUG_BRIGHTNESS, AUG_ROT_DEG, AUG_TRANSLATE_FRAC, N_BG_DRAWS, DEFAULT_LAMBDAS
-from .data import load_tensor, other_class_records, same_class_records
-from .io_utils import mean_std, rows_to_excel, save_json
-from .metrics import (
+try:
+    from ._path import ensure_pkg_path
+except ImportError:
+    from _path import ensure_pkg_path
+
+ensure_pkg_path()
+
+from cli import add_common_args, resolve_run
+from classifiers import load_classifier, run_with_acts
+from config import AUG_BRIGHTNESS, AUG_ROT_DEG, AUG_TRANSLATE_FRAC, N_BG_DRAWS, DEFAULT_LAMBDAS
+from data import load_tensor, other_class_records, same_class_records
+from io_utils import mean_std, rows_to_excel, save_json
+from metrics import (
     class_confidence,
     confidence_delta,
     evaluate_explanation,
     robustness_accuracy,
     top1_agreement,
 )
-from .runner import load_masks, run_dir
-from .train import TrainConfig, image_seed, log
-from .viz import caption, grouped_bars, image_grid, panel_expl, panel_mask, panel_original, to_numpy_image
+from runner import load_masks, run_dir
+from train import TrainConfig, image_seed, log
+from viz import caption, grouped_bars, image_grid, panel_expl, panel_mask, panel_original, to_numpy_image
 
 
 def _sample_bg(bundle, eval_set, rec, pool, rng, device):
@@ -138,8 +145,8 @@ def run_section4(args) -> None:
                 rec_k = dict(rec)
                 # train against the perturbed tensor by a tiny local wrapper: write temp via maybe_train? 
                 # Direct train_mask call:
-                from .train import train_mask
-                from .metrics import evaluate_explanation as ev
+                from train import train_mask
+                from metrics import evaluate_explanation as ev
 
                 log(f"  retraining on {tag} ...")
                 result = train_mask(bundle, x_k, cfg)
@@ -207,7 +214,7 @@ def _fig_e4(eval_set, args, device, fig_dir) -> None:
         if not (d / "masks.pt").exists():
             continue
         m, _ = load_masks(d, device)
-        from .io_utils import load_json
+        from io_utils import load_json
         met = load_json(d / "metrics.json")
         cap0 = caption(met["p_actual_pct"], met["conf_e"], met["top1_agreement"])
         m3 = m.expand_as(x)

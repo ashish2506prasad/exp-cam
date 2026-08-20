@@ -7,11 +7,18 @@ from typing import Dict, Optional
 
 import torch
 
-from .classifiers import ClassifierBundle
-from .data import load_tensor
-from .io_utils import load_json, save_json
-from .metrics import evaluate_explanation
-from .train import TrainConfig, TrainResult, image_seed, log, save_mask_tensors, train_mask
+try:
+    from ._path import ensure_pkg_path
+except ImportError:
+    from _path import ensure_pkg_path
+
+ensure_pkg_path()
+
+from classifiers import ClassifierBundle
+from data import load_tensor
+from io_utils import load_json, save_json
+from metrics import evaluate_explanation
+from train import TrainConfig, TrainResult, image_seed, log, save_mask_tensors, train_mask
 
 
 def run_dir(root: Path, section: str, backbone: str, config_name: str, image_id: str) -> Path:

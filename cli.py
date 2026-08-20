@@ -3,13 +3,18 @@
 from __future__ import annotations
 
 import argparse
-from pathlib import Path
-from typing import Optional, Sequence
+
+try:
+    from ._path import ensure_pkg_path
+except ImportError:
+    from _path import ensure_pkg_path
+
+ensure_pkg_path()
 
 import torch
 
-from .config import DEFAULT_BACKBONES, N_IMAGES, RUNS_DIR, SEED, STEPS
-from .data import load_eval_set
+from config import DEFAULT_BACKBONES, SEED, STEPS, add_where_args
+from data import load_eval_set
 
 
 def device_from_flag(s: str) -> torch.device:
@@ -21,12 +26,12 @@ def device_from_flag(s: str) -> torch.device:
 
 
 def add_common_args(p: argparse.ArgumentParser) -> argparse.ArgumentParser:
+    add_where_args(p)
     p.add_argument("--device", default="auto")
     p.add_argument("--seed", type=int, default=SEED)
     p.add_argument("--steps", type=int, default=STEPS)
     p.add_argument("--n-images", type=int, default=None, help="Subset of the cached eval set (still stratified order).")
     p.add_argument("--backbones", nargs="+", default=list(DEFAULT_BACKBONES))
-    p.add_argument("--out", type=Path, default=RUNS_DIR)
     p.add_argument("--skip-existing", action="store_true", default=True)
     p.add_argument("--no-skip-existing", action="store_false", dest="skip_existing")
     p.add_argument("--quick", action="store_true", help="Tiny debug run: 1 image/class, 40 steps, resnet18 only.")
@@ -40,6 +45,15 @@ def add_common_args(p: argparse.ArgumentParser) -> argparse.ArgumentParser:
 
 
 def resolve_run(args: argparse.Namespace):
+    import config as C
+
+    C.apply_where(
+        getattr(args, "where", "auto"),
+        data_root=getattr(args, "data_root", None),
+        runs_dir=getattr(args, "out", None),
+    )
+    if getattr(args, "out", None) is None:
+        args.out = C.RUNS_DIR
     if args.quick:
         args.steps = min(args.steps, 40)
         args.backbones = ["resnet18"]

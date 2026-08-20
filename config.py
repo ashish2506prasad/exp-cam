@@ -8,10 +8,17 @@ from __future__ import annotations
 
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+PACKAGE_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = PACKAGE_DIR.parent
 TRAINX_DIR = PROJECT_ROOT / "trainx"
 RUNS_DIR = PROJECT_ROOT / "expcam_runs"
 EVAL_SET_PATH = RUNS_DIR / "eval_set.json"
+WHERE = "local"
+
+# Kaggle dataset layout (class folders such as n01440764 live under this root).
+KAGGLE_TRAINX = Path("/kaggle/input/datasets/meashish2003/trainx/trainx")
+KAGGLE_RUNS = Path("/kaggle/working/expcam_runs")
+KAGGLE_WORKING = Path("/kaggle/working")
 
 SEED = 0
 N_IMAGES = 70  # 10 per class × 7 trainx classes (within the recommended 50–100)
@@ -89,6 +96,68 @@ AUG_BRIGHTNESS = 0.10
 
 # Retrospective count of distinct λ tuples in AM0–AM6 (Section 5 "tuning cost")
 MANUAL_TRIAL_CONFIGS = 18
+
+
+def detect_where() -> str:
+    if Path("/kaggle/input").exists() or Path("/kaggle/working").exists():
+        return "kaggle"
+    return "local"
+
+
+def apply_where(where: str = "auto", data_root=None, runs_dir=None) -> str:
+    """Switch trainx/ and output roots for local vs Kaggle.
+
+    local:  <repo>/trainx  and  <repo>/expcam_runs
+    kaggle: /kaggle/input/datasets/meashish2003/trainx/trainx
+            and /kaggle/working/expcam_runs
+    """
+    global PROJECT_ROOT, TRAINX_DIR, RUNS_DIR, EVAL_SET_PATH, WHERE
+    if where in (None, "auto"):
+        where = detect_where()
+    WHERE = where
+    if where == "kaggle":
+        PROJECT_ROOT = KAGGLE_WORKING
+        TRAINX_DIR = KAGGLE_TRAINX
+        RUNS_DIR = KAGGLE_RUNS
+    elif where == "local":
+        PROJECT_ROOT = PACKAGE_DIR.parent
+        TRAINX_DIR = PROJECT_ROOT / "trainx"
+        RUNS_DIR = PROJECT_ROOT / "expcam_runs"
+    else:
+        raise ValueError(f"Unknown --where {where!r}; expected local, kaggle, or auto")
+    if data_root is not None:
+        TRAINX_DIR = Path(data_root)
+    if runs_dir is not None:
+        RUNS_DIR = Path(runs_dir)
+    EVAL_SET_PATH = RUNS_DIR / "eval_set.json"
+    print(f"[paths] where={WHERE} trainx={TRAINX_DIR} runs={RUNS_DIR}", flush=True)
+    return WHERE
+
+
+def add_where_args(p):
+    p.add_argument(
+        "--where",
+        choices=("local", "kaggle", "auto"),
+        default="auto",
+        help=(
+            "Path layout. local: <repo>/trainx and <repo>/expcam_runs. "
+            "kaggle: /kaggle/input/datasets/meashish2003/trainx/trainx and "
+            "/kaggle/working/expcam_runs. auto: kaggle if /kaggle exists."
+        ),
+    )
+    p.add_argument(
+        "--data-root",
+        type=Path,
+        default=None,
+        help="Override the image folder (must contain n01440764 and the other synsets).",
+    )
+    p.add_argument(
+        "--out",
+        type=Path,
+        default=None,
+        help="Run directory. Default: expcam_runs (local) or /kaggle/working/expcam_runs (kaggle).",
+    )
+    return p
 
 
 def lambdas_with_overrides(**overrides) -> dict:

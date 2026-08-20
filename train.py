@@ -12,9 +12,16 @@ from typing import Dict, List, Optional, Sequence, Tuple
 import torch
 import torch.nn as nn
 
-from .classifiers import ClassifierBundle, run_with_acts
-from .config import DEFAULT_LAMBDAS, LR, MASK_THRESH, ROB_K_BACKGROUNDS, SEED, STEPS, TEMPERATURE
-from .losses import (
+try:
+    from ._path import ensure_pkg_path
+except ImportError:
+    from _path import ensure_pkg_path
+
+ensure_pkg_path()
+
+from classifiers import ClassifierBundle, run_with_acts
+from config import DEFAULT_LAMBDAS, LR, MASK_THRESH, ROB_K_BACKGROUNDS, SEED, STEPS, TEMPERATURE
+from losses import (
     abductive_loss,
     area_loss,
     binarization_loss,
@@ -27,7 +34,7 @@ from .losses import (
     sample_gaussian_backgrounds,
     tv8_loss,
 )
-from .models import UNetCSAE
+from models import UNetCSAE
 
 
 def log(msg: str) -> None:
@@ -234,7 +241,7 @@ def train_mask(
 
 def save_mask_tensors(out_dir, result: TrainResult) -> None:
     from pathlib import Path
-    from .io_utils import ensure_dir
+    from io_utils import ensure_dir
 
     out_dir = ensure_dir(Path(out_dir))
     torch.save(

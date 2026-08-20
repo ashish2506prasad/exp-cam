@@ -8,16 +8,23 @@ from pathlib import Path
 
 import torch
 
-from .baselines import BASELINE_NAMES, compute_heatmap, otsu_binarize, topk_binarize
-from .cli import add_common_args, resolve_run
-from .classifiers import load_classifier
-from .config import N_INSERT_SEEDS, N_RISE_MASKS
-from .data import load_tensor
-from .io_utils import ensure_dir, load_json, mean_std, rows_to_excel, save_json
-from .metrics import evaluate_explanation, insertion_curve
-from .runner import load_masks, run_dir
-from .train import log
-from .viz import caption, grouped_bars, image_grid, line_auc, panel_expl, panel_mask, panel_original
+try:
+    from ._path import ensure_pkg_path
+except ImportError:
+    from _path import ensure_pkg_path
+
+ensure_pkg_path()
+
+from baselines import BASELINE_NAMES, compute_heatmap, otsu_binarize, topk_binarize
+from cli import add_common_args, resolve_run
+from classifiers import load_classifier
+from config import N_INSERT_SEEDS, N_RISE_MASKS
+from data import load_tensor
+from io_utils import ensure_dir, load_json, mean_std, rows_to_excel, save_json
+from metrics import evaluate_explanation, insertion_curve
+from runner import load_masks, run_dir
+from train import log
+from viz import caption, grouped_bars, image_grid, line_auc, panel_expl, panel_mask, panel_original
 
 
 def _exp_dir(args, backbone, image_id) -> Path:

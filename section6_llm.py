@@ -13,9 +13,16 @@ from pathlib import Path
 import torch
 import torch.nn.functional as F
 
-from .config import RUNS_DIR, SEED, TEMPERATURE
-from .io_utils import ensure_dir, rows_to_excel, save_json
-from .losses import hard_st
+try:
+    from ._path import ensure_pkg_path
+except ImportError:
+    from _path import ensure_pkg_path
+
+ensure_pkg_path()
+
+from config import SEED, TEMPERATURE, add_where_args
+from io_utils import ensure_dir, rows_to_excel, save_json
+from losses import hard_st
 
 
 PROMPTS = [
@@ -250,14 +257,19 @@ def run_section6(args) -> None:
 
 def main(argv=None):
     p = argparse.ArgumentParser(description="Section 6: exploratory LLM token masks")
+    add_where_args(p)
     p.add_argument("--model", default="distilgpt2", help="Causal LM id. Paper target: meta-llama/Llama-3.2-3B")
     p.add_argument("--device", default="auto")
     p.add_argument("--steps", type=int, default=200)
     p.add_argument("--lr", type=float, default=5e-2)
     p.add_argument("--n-prompts", type=int, default=12)
     p.add_argument("--seed", type=int, default=SEED)
-    p.add_argument("--out", type=Path, default=RUNS_DIR)
     args = p.parse_args(argv)
+    import config as C
+
+    C.apply_where(args.where, data_root=args.data_root, runs_dir=args.out)
+    if args.out is None:
+        args.out = C.RUNS_DIR
     run_section6(args)
 
 

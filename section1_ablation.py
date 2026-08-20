@@ -9,9 +9,16 @@ import argparse
 from collections import defaultdict
 from pathlib import Path
 
-from .cli import add_common_args, resolve_run
-from .classifiers import load_classifier
-from .config import (
+try:
+    from ._path import ensure_pkg_path
+except ImportError:
+    from _path import ensure_pkg_path
+
+ensure_pkg_path()
+
+from cli import add_common_args, resolve_run
+from classifiers import load_classifier
+from config import (
     DEFAULT_LAMBDAS,
     LOSS_TERMS,
     SWEEP_MULTS,
@@ -19,11 +26,11 @@ from .config import (
     SWEEP_TERMS,
     loo_configs,
 )
-from .data import load_tensor
-from .io_utils import mean_std, rows_to_excel, save_json
-from .runner import maybe_train_and_eval, run_dir
-from .train import TrainConfig, image_seed, log
-from .viz import (
+from data import load_tensor
+from io_utils import mean_std, rows_to_excel, save_json
+from runner import maybe_train_and_eval, run_dir
+from train import TrainConfig, image_seed, log
+from viz import (
     caption,
     grouped_bars_dual,
     image_grid,
@@ -228,7 +235,7 @@ def _make_figures(eval_set, images, args, all_rows, device) -> None:
         / "loss_curve.json"
     )
     if curve_path.exists():
-        from .io_utils import load_json
+        from io_utils import load_json
 
         training_curves(fig_dir / "FigA10_training_curves.png", load_json(curve_path))
 
@@ -237,8 +244,8 @@ def _make_figures(eval_set, images, args, all_rows, device) -> None:
 
 
 def _fig_a11(eval_set, args, device, fig_dir: Path) -> None:
-    from .classifiers import load_classifier
-    from .runner import load_masks
+    from classifiers import load_classifier
+    from runner import load_masks
 
     qids = eval_set["qualitative_ids"][:4]
     id_to_rec = {r["id"]: r for r in eval_set["images"]}
@@ -260,7 +267,7 @@ def _fig_a11(eval_set, args, device, fig_dir: Path) -> None:
             d = run_dir(args.out, "section1", backbone, cfg_name, qid)
             if not (d / "masks.pt").exists():
                 continue
-            from .io_utils import load_json
+            from io_utils import load_json
 
             m_hard, _ = load_masks(d, device)
             met = load_json(d / "metrics.json")

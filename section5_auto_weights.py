@@ -12,13 +12,20 @@ from pathlib import Path
 
 import numpy as np
 
-from .cli import add_common_args, resolve_run
-from .classifiers import load_classifier
-from .config import DEFAULT_LAMBDAS, MANUAL_TRIAL_CONFIGS, P_TARGETS
-from .io_utils import load_json, mean_std, rows_to_excel, save_json
-from .runner import maybe_train_and_eval
-from .train import TrainConfig, image_seed, log
-from .viz import boxplot, grouped_bars, scatter_parity
+try:
+    from ._path import ensure_pkg_path
+except ImportError:
+    from _path import ensure_pkg_path
+
+ensure_pkg_path()
+
+from cli import add_common_args, resolve_run
+from classifiers import load_classifier
+from config import DEFAULT_LAMBDAS, MANUAL_TRIAL_CONFIGS, P_TARGETS
+from io_utils import load_json, mean_std, rows_to_excel, save_json
+from runner import maybe_train_and_eval
+from train import TrainConfig, image_seed, log
+from viz import boxplot, grouped_bars, scatter_parity
 
 
 def run_section5(args) -> None:

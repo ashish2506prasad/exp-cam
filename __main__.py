@@ -1,25 +1,62 @@
-"""python -m expcam <section|eval-set|all> [args...]"""
+"""python -m expcam <section|eval-set|all> [args...]
+
+Also works as a script on Kaggle:
+    python __main__.py 1 --where kaggle
+    python section1_ablation.py --where kaggle
+"""
 
 from __future__ import annotations
 
 import sys
 
+try:
+    from ._path import ensure_pkg_path
+except ImportError:
+    from _path import ensure_pkg_path
+
+ensure_pkg_path()
+
 USAGE = """EXP-CAM revision experiments
 
-Usage (from repo root, after installing requirements-expcam.txt):
+Local (from the folder that contains trainx/ and expcam/):
+  python -m expcam eval-set --where local
+  python -m expcam 1 --where local [--quick]
 
-  python -m expcam eval-set
-  python -m expcam 1 [--quick]
-  python -m expcam 2
-  python -m expcam 3
-  python -m expcam 4
-  python -m expcam 5
-  python -m expcam 6 [--model distilgpt2]
-  python -m expcam all --quick
+Kaggle (from the cloned exp-cam folder):
+  python __main__.py eval-set --where kaggle
+  python section1_ablation.py --where kaggle
+  python __main__.py 1 --where kaggle [--quick]
 
-Every section reuses expcam_runs/eval_set.json (sampled from trainx/).
-JSON + Excel intermediates are written under expcam_runs/sectionN/.
+  --where kaggle uses
+    /kaggle/input/datasets/meashish2003/trainx/trainx
+    /kaggle/working/expcam_runs
+  Override with --data-root / --out if those paths differ.
+
+--where auto (default): kaggle if /kaggle exists, else local.
+
+Every section reuses eval_set.json under the runs directory.
+JSON + Excel intermediates are written under <runs>/sectionN/.
 """
+
+
+_SECTION_MODS = {
+    "1": "section1_ablation",
+    "2": "section2_minimality",
+    "3": "section3_baselines",
+    "4": "section4_robustness",
+    "5": "section5_auto_weights",
+    "6": "section6_llm",
+    "section1": "section1_ablation",
+    "section2": "section2_minimality",
+    "section3": "section3_baselines",
+    "section4": "section4_robustness",
+    "section5": "section5_auto_weights",
+    "section6": "section6_llm",
+}
+
+
+def _load(modname: str):
+    return __import__(modname, fromlist=["main"])
 
 
 def main(argv=None):
@@ -29,40 +66,23 @@ def main(argv=None):
         return
     cmd, rest = argv[0], argv[1:]
     if cmd in ("eval-set", "eval_set", "0"):
-        from .data import main as data_main
+        from data import main as data_main
 
         data_main(rest)
         return
-    mapping = {
-        "1": ("expcam.section1_ablation", "main"),
-        "2": ("expcam.section2_minimality", "main"),
-        "3": ("expcam.section3_baselines", "main"),
-        "4": ("expcam.section4_robustness", "main"),
-        "5": ("expcam.section5_auto_weights", "main"),
-        "6": ("expcam.section6_llm", "main"),
-        "section1": ("expcam.section1_ablation", "main"),
-        "section2": ("expcam.section2_minimality", "main"),
-        "section3": ("expcam.section3_baselines", "main"),
-        "section4": ("expcam.section4_robustness", "main"),
-        "section5": ("expcam.section5_auto_weights", "main"),
-        "section6": ("expcam.section6_llm", "main"),
-    }
     if cmd == "all":
-        from .data import main as data_main
+        from data import main as data_main
 
-        data_main([])
+        data_main(rest)
         for key in ("1", "2", "3", "4", "5", "6"):
-            mod, fn = mapping[key]
+            modname = _SECTION_MODS[key]
             print(f"\n===== Section {key} =====")
-            __import__(mod, fromlist=[fn])
-            getattr(sys.modules[mod], fn)(rest)
+            getattr(_load(modname), "main")(rest)
         return
-    if cmd not in mapping:
+    if cmd not in _SECTION_MODS:
         print(USAGE)
         raise SystemExit(f"Unknown command: {cmd}")
-    mod, fn = mapping[cmd]
-    __import__(mod, fromlist=[fn])
-    getattr(sys.modules[mod], fn)(rest)
+    getattr(_load(_SECTION_MODS[cmd]), "main")(rest)
 
 
 if __name__ == "__main__":

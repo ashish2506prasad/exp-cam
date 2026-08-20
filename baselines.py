@@ -12,7 +12,14 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from .classifiers import ClassifierBundle
+try:
+    from ._path import ensure_pkg_path
+except ImportError:
+    from _path import ensure_pkg_path
+
+ensure_pkg_path()
+
+from classifiers import ClassifierBundle
 
 
 def _otsu(heatmap: np.ndarray) -> float:
